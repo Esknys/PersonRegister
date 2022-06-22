@@ -1,9 +1,16 @@
 package com.example.personregister;
 
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
+
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.ObjectInputStream;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -40,5 +47,27 @@ class FileOpenerTxt implements FileOpener {
         String telefonnummer = array[4];
 
         return new Person(name, age, date, email, telefonnummer);
+    }
+}
+
+class FileOpenerJobj implements FileOpener {
+
+    public ArrayList<PersonJobj> openJobj(Path path) {
+
+        ArrayList<PersonJobj> personer = new ArrayList<>();
+
+        try (InputStream is = Files.newInputStream((path), StandardOpenOption.READ)) {
+
+            ObjectInputStream ois = new ObjectInputStream(is);
+
+            personer = (ArrayList<PersonJobj>) ois.readObject();
+
+        } catch (IOException ioe) {
+            System.out.println(ioe.getMessage());
+        } catch (ClassNotFoundException cnfe) {
+            System.out.println(cnfe.getMessage());
+        }
+
+        return personer;
     }
 }

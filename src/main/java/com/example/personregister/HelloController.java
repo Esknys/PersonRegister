@@ -2,23 +2,33 @@ package com.example.personregister;
 
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.event.ActionEvent;
 import javafx.event.Event;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class HelloController {
 
-    private ArrayList<Person> personArrayList = new ArrayList<>();
-
     private ObservableList<Person> personObservableList = FXCollections.observableArrayList();
 
+    public FileOpenerJobj fileOpenerJobj = new FileOpenerJobj();
+    Path path1 = Paths.get("personer.jobj");
+
+    private ArrayList<PersonJobj> personJobjs = fileOpenerJobj.openJobj(path1);
+
+    private PersonRegisterJobj personRegisterJobj = new PersonRegisterJobj(personJobjs);
+
     private PersonRegister personRegister = new PersonRegister(personObservableList);
+
+    ArrayList<Person> personer1 = new ArrayList<>();
     private String navn;
     private String alder;
     private LocalDate dato;
@@ -29,7 +39,11 @@ public class HelloController {
 
     Path path = Paths.get("src/main/java/com/example/personregister/personregister.txt");
 
+    File file = new File("personer.jobj");
+
     public FileOpenerTxt fileOpenerTxt = new FileOpenerTxt();
+
+    public FileSaverJobj fileSaverJobj = new FileSaverJobj();
 
     @FXML
     private TextField txtNavn;
@@ -74,7 +88,38 @@ public class HelloController {
     private TextArea txtRegister;
 
     @FXML
-    private TableView<Event> tableView;
+    private TableView tableView;
+
+    @FXML
+    private ChoiceBox<String> choiceBox;
+
+    @FXML
+    private TextField txtFilter;
+
+    @FXML
+    protected void filtrer() {
+
+        ObservableList<Person> people = FXCollections.observableArrayList();
+
+        people = personObservableList;
+
+            switch (choiceBox.getValue()) {
+                case "Navn":
+                    people = people.stream().filter(i -> i.getNavn().contains(txtFilter.getText())).collect(Collectors.toCollection(FXCollections::observableArrayList));
+                    break;
+                case "Alder":
+                    people = people.stream().filter(i -> i.getAlder().contains(txtFilter.getText())).collect(Collectors.toCollection(FXCollections::observableArrayList));
+                    break;
+                case "E-post":
+                    people = people.stream().filter(i -> i.getEpost().contains(txtFilter.getText())).collect(Collectors.toCollection(FXCollections::observableArrayList));
+                    break;
+                case "Telefonnummer":
+                    people = people.stream().filter(i -> i.getTelefonnummer().contains(txtFilter.getText())).collect(Collectors.toCollection(FXCollections::observableArrayList));
+                    break;
+            }
+
+        tableView.setItems(people);
+    }
 
     @FXML
     protected void navnEdited(TableColumn.CellEditEvent<Person, String> event) throws InputException {
@@ -136,6 +181,8 @@ public class HelloController {
 
         try {
             Person person = new Person(navn, alder, dato, epost, telefonnummer);
+            PersonJobj personJobj = new PersonJobj(navn, alder, dato, epost, telefonnummer);
+            personRegisterJobj.addPersoner(personJobj);
             personRegister.addPersoner(person);
             String ut = "";
             for (Person p : personRegister.personer)
@@ -145,6 +192,12 @@ public class HelloController {
             txtRegister.setText(ut);
 
             fileSaverTxt.save(personRegister.personer, path);
+
+            for (Person p : personRegister.personer) {
+                personer1.add(p);
+            }
+
+            fileSaverJobj.saveJobj(personRegisterJobj.personer, file);
 
             personRegister.attachTableView(tableView);
 
@@ -171,21 +224,17 @@ public class HelloController {
     @FXML
     protected void onLesFraFilButtonClick() {
 
-        try {
-            List<Person> personList = fileOpenerTxt.read("src/main/java/com/example/personregister/personregister.txt");
+            Path path1 = Paths.get("personer.jobj");
+            ArrayList<PersonJobj> personList = fileOpenerJobj.openJobj(path1);
             System.out.println(personList);
 
             String ut = "";
-            for (Person p : personList)
+            for (PersonJobj p : personList)
             {
                 ut += p.getNavn() + " " + p.getAlder() + " " + p.getFoedselsdato() + " " + p.getEpost() + " " + p.getTelefonnummer() + "\n";
             }
             txtRegister.setText(ut);
 
-        } catch (IOException ioe) {
-            errRegistrer.setText(ioe.getMessage());
-        } catch (InputException ie) {
-            errRegistrer.setText((ie.getMessage()));
-        }
     }
+
 }
